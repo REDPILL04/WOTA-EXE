@@ -1,0 +1,1063 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>WOTA EXE — Gaming Applications</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700;900&family=Rajdhani:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --red: #ff0a0a;
+    --red-dim: #cc0000;
+    --red-dark: #3a0000;
+    --red-glow: rgba(255,10,10,0.6);
+    --red-glow-soft: rgba(255,10,10,0.15);
+    --bg: #050505;
+    --bg2: #0a0a0a;
+    --bg3: #0f0a0a;
+    --text: #f0e8e8;
+    --text-muted: #7a5555;
+    --border: rgba(255,10,10,0.2);
+    --border-bright: rgba(255,10,10,0.6);
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 16px;
+    line-height: 1.6;
+    overflow-x: hidden;
+    cursor: crosshair;
+  }
+
+  /* ---- CUSTOM CURSOR ---- */
+  .cursor {
+    width: 16px; height: 16px;
+    border: 1.5px solid var(--red);
+    border-radius: 50%;
+    position: fixed;
+    pointer-events: none;
+    z-index: 9999;
+    transition: transform 0.1s, border-color 0.2s;
+    box-shadow: 0 0 8px var(--red-glow);
+    transform: translate(-50%, -50%);
+  }
+
+  /* ---- SCANLINES OVERLAY ---- */
+  body::before {
+    content: '';
+    position: fixed; inset: 0;
+    background: repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 2px,
+      rgba(0,0,0,0.07) 2px,
+      rgba(0,0,0,0.07) 4px
+    );
+    pointer-events: none;
+    z-index: 1000;
+  }
+
+  /* ---- NOISE TEXTURE ---- */
+  body::after {
+    content: '';
+    position: fixed; inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+    pointer-events: none;
+    z-index: 999;
+    opacity: 0.4;
+  }
+
+  /* ---- NAV ---- */
+  nav {
+    position: fixed; top: 0; left: 0; right: 0;
+    z-index: 500;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 40px;
+    height: 64px;
+    background: rgba(5,5,5,0.92);
+    border-bottom: 1px solid var(--border);
+    backdrop-filter: blur(12px);
+  }
+
+  .nav-logo {
+    font-family: 'Orbitron', monospace;
+    font-size: 20px;
+    font-weight: 900;
+    letter-spacing: 4px;
+    color: var(--red);
+    text-shadow: 0 0 20px var(--red-glow), 0 0 40px rgba(255,10,10,0.3);
+    text-decoration: none;
+  }
+
+  .nav-logo span { color: var(--text); }
+
+  .nav-links {
+    display: flex;
+    gap: 32px;
+    list-style: none;
+  }
+
+  .nav-links a {
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    text-decoration: none;
+    transition: color 0.2s, text-shadow 0.2s;
+  }
+
+  .nav-links a:hover {
+    color: var(--red);
+    text-shadow: 0 0 10px var(--red-glow);
+  }
+
+  .nav-cta {
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--red);
+    border: 1px solid var(--red);
+    padding: 8px 20px;
+    text-decoration: none;
+    transition: background 0.2s, box-shadow 0.2s;
+  }
+
+  .nav-cta:hover {
+    background: rgba(255,10,10,0.1);
+    box-shadow: 0 0 20px var(--red-glow), inset 0 0 20px rgba(255,10,10,0.05);
+  }
+
+  /* ---- HERO ---- */
+  .hero {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 100px 40px 60px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .hero-bg {
+    position: absolute; inset: 0;
+    background:
+      radial-gradient(ellipse 60% 50% at 50% 60%, rgba(255,10,10,0.08) 0%, transparent 70%),
+      radial-gradient(ellipse 40% 30% at 50% 50%, rgba(255,10,10,0.05) 0%, transparent 60%);
+  }
+
+  .hero-grid {
+    position: absolute; inset: 0;
+    background-image:
+      linear-gradient(rgba(255,10,10,0.04) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,10,10,0.04) 1px, transparent 1px);
+    background-size: 60px 60px;
+    mask-image: radial-gradient(ellipse 80% 80% at 50% 50%, black 0%, transparent 100%);
+  }
+
+  .hero-eyebrow {
+    font-family: 'Orbitron', monospace;
+    font-size: 11px;
+    letter-spacing: 6px;
+    text-transform: uppercase;
+    color: var(--red);
+    margin-bottom: 24px;
+    opacity: 0;
+    animation: fadeUp 0.8s 0.2s forwards;
+  }
+
+  .hero-title {
+    font-family: 'Orbitron', monospace;
+    font-size: clamp(52px, 10vw, 110px);
+    font-weight: 900;
+    line-height: 0.9;
+    letter-spacing: -2px;
+    color: var(--text);
+    text-shadow:
+      0 0 40px rgba(255,10,10,0.4),
+      0 0 80px rgba(255,10,10,0.2),
+      0 0 120px rgba(255,10,10,0.1);
+    opacity: 0;
+    animation: fadeUp 0.8s 0.4s forwards;
+    position: relative;
+    z-index: 1;
+  }
+
+  .hero-title .red {
+    color: var(--red);
+    text-shadow:
+      0 0 30px var(--red-glow),
+      0 0 60px rgba(255,10,10,0.5),
+      0 0 100px rgba(255,10,10,0.3);
+  }
+
+  .hero-sub {
+    font-size: 18px;
+    font-weight: 400;
+    color: var(--text-muted);
+    max-width: 520px;
+    margin: 24px auto 0;
+    letter-spacing: 0.5px;
+    opacity: 0;
+    animation: fadeUp 0.8s 0.6s forwards;
+  }
+
+  .hero-btns {
+    display: flex;
+    gap: 16px;
+    justify-content: center;
+    margin-top: 44px;
+    opacity: 0;
+    animation: fadeUp 0.8s 0.8s forwards;
+  }
+
+  .btn-primary {
+    font-family: 'Orbitron', monospace;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: #050505;
+    background: var(--red);
+    border: none;
+    padding: 16px 36px;
+    cursor: pointer;
+    text-decoration: none;
+    box-shadow: 0 0 30px var(--red-glow), 0 0 60px rgba(255,10,10,0.3);
+    transition: box-shadow 0.3s, transform 0.2s;
+    clip-path: polygon(8px 0%, 100% 0%, calc(100% - 8px) 100%, 0% 100%);
+  }
+
+  .btn-primary:hover {
+    box-shadow: 0 0 50px var(--red-glow), 0 0 100px rgba(255,10,10,0.4);
+    transform: translateY(-2px);
+  }
+
+  .btn-secondary {
+    font-family: 'Orbitron', monospace;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--red);
+    background: transparent;
+    border: 1px solid var(--red);
+    padding: 16px 36px;
+    cursor: pointer;
+    text-decoration: none;
+    transition: background 0.2s, box-shadow 0.2s, transform 0.2s;
+    clip-path: polygon(8px 0%, 100% 0%, calc(100% - 8px) 100%, 0% 100%);
+  }
+
+  .btn-secondary:hover {
+    background: rgba(255,10,10,0.08);
+    box-shadow: 0 0 20px rgba(255,10,10,0.3);
+    transform: translateY(-2px);
+  }
+
+  .hero-stats {
+    display: flex;
+    gap: 60px;
+    justify-content: center;
+    margin-top: 80px;
+    opacity: 0;
+    animation: fadeUp 0.8s 1.0s forwards;
+  }
+
+  .stat { text-align: center; }
+  .stat-num {
+    font-family: 'Orbitron', monospace;
+    font-size: 32px;
+    font-weight: 900;
+    color: var(--red);
+    text-shadow: 0 0 20px var(--red-glow);
+    display: block;
+  }
+  .stat-label {
+    font-size: 11px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--text-muted);
+  }
+
+  /* ---- SECTION ---- */
+  section { padding: 100px 40px; max-width: 1200px; margin: 0 auto; }
+
+  .section-label {
+    font-family: 'Orbitron', monospace;
+    font-size: 10px;
+    letter-spacing: 6px;
+    text-transform: uppercase;
+    color: var(--red);
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .section-label::before {
+    content: '';
+    display: inline-block;
+    width: 24px; height: 1px;
+    background: var(--red);
+    box-shadow: 0 0 6px var(--red-glow);
+  }
+
+  .section-title {
+    font-family: 'Orbitron', monospace;
+    font-size: clamp(28px, 4vw, 48px);
+    font-weight: 900;
+    color: var(--text);
+    line-height: 1.1;
+    margin-bottom: 16px;
+  }
+
+  .section-desc {
+    font-size: 16px;
+    color: var(--text-muted);
+    max-width: 500px;
+    margin-bottom: 60px;
+  }
+
+  /* ---- PRODUCTS GRID ---- */
+  .products-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 24px;
+  }
+
+  .product-card {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    position: relative;
+    overflow: hidden;
+    transition: border-color 0.3s, transform 0.3s;
+    cursor: pointer;
+  }
+
+  .product-card::before {
+    content: '';
+    position: absolute; inset: 0;
+    background: radial-gradient(ellipse 80% 60% at 50% 0%, rgba(255,10,10,0.06) 0%, transparent 70%);
+    opacity: 0;
+    transition: opacity 0.3s;
+  }
+
+  .product-card:hover {
+    border-color: var(--border-bright);
+    transform: translateY(-4px);
+    box-shadow: 0 0 40px rgba(255,10,10,0.15), 0 20px 40px rgba(0,0,0,0.5);
+  }
+
+  .product-card:hover::before { opacity: 1; }
+
+  .product-card.featured {
+    border-color: rgba(255,10,10,0.4);
+    box-shadow: 0 0 30px rgba(255,10,10,0.1);
+  }
+
+  .product-badge {
+    position: absolute;
+    top: 16px; right: 16px;
+    font-family: 'Orbitron', monospace;
+    font-size: 9px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    padding: 4px 10px;
+    background: var(--red);
+    color: #050505;
+    font-weight: 700;
+    z-index: 2;
+  }
+
+  .product-badge.sale {
+    background: transparent;
+    border: 1px solid var(--red);
+    color: var(--red);
+  }
+
+  .product-img {
+    width: 100%;
+    height: 180px;
+    background: var(--bg3);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .product-img-glow {
+    position: absolute;
+    width: 120px; height: 120px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(255,10,10,0.2) 0%, transparent 70%);
+    animation: pulse 3s infinite;
+  }
+
+  .product-icon {
+    font-size: 56px;
+    position: relative;
+    z-index: 1;
+    filter: drop-shadow(0 0 16px rgba(255,10,10,0.6));
+  }
+
+  .product-body { padding: 24px; }
+
+  .product-tag {
+    font-size: 10px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--red);
+    margin-bottom: 8px;
+    display: block;
+  }
+
+  .product-name {
+    font-family: 'Orbitron', monospace;
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--text);
+    margin-bottom: 10px;
+    line-height: 1.2;
+  }
+
+  .product-desc {
+    font-size: 14px;
+    color: var(--text-muted);
+    line-height: 1.6;
+    margin-bottom: 20px;
+  }
+
+  .product-features {
+    list-style: none;
+    margin-bottom: 24px;
+  }
+
+  .product-features li {
+    font-size: 13px;
+    color: var(--text-muted);
+    padding: 4px 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .product-features li::before {
+    content: '';
+    width: 4px; height: 4px;
+    background: var(--red);
+    box-shadow: 0 0 6px var(--red-glow);
+    flex-shrink: 0;
+  }
+
+  .product-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-top: 20px;
+    border-top: 1px solid var(--border);
+  }
+
+  .product-price {
+    font-family: 'Orbitron', monospace;
+    font-size: 22px;
+    font-weight: 900;
+    color: var(--red);
+    text-shadow: 0 0 16px rgba(255,10,10,0.4);
+  }
+
+  .product-price .old {
+    font-size: 14px;
+    color: var(--text-muted);
+    text-decoration: line-through;
+    margin-right: 8px;
+    text-shadow: none;
+  }
+
+  .btn-buy {
+    font-family: 'Orbitron', monospace;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: #050505;
+    background: var(--red);
+    border: none;
+    padding: 10px 22px;
+    cursor: pointer;
+    transition: box-shadow 0.2s, transform 0.15s;
+    clip-path: polygon(6px 0%, 100% 0%, calc(100% - 6px) 100%, 0% 100%);
+  }
+
+  .btn-buy:hover {
+    box-shadow: 0 0 24px var(--red-glow), 0 0 48px rgba(255,10,10,0.3);
+    transform: scale(1.04);
+  }
+
+  /* ---- DIVIDER ---- */
+  .red-divider {
+    width: 100%;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--red), transparent);
+    box-shadow: 0 0 12px var(--red-glow);
+    margin: 0;
+  }
+
+  /* ---- WHY SECTION ---- */
+  .why-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 24px;
+  }
+
+  .why-card {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    padding: 28px 24px;
+    transition: border-color 0.3s, box-shadow 0.3s;
+  }
+
+  .why-card:hover {
+    border-color: rgba(255,10,10,0.4);
+    box-shadow: 0 0 24px rgba(255,10,10,0.08);
+  }
+
+  .why-icon {
+    font-size: 32px;
+    margin-bottom: 16px;
+    filter: drop-shadow(0 0 8px rgba(255,10,10,0.5));
+    display: block;
+  }
+
+  .why-title {
+    font-family: 'Orbitron', monospace;
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--text);
+    margin-bottom: 8px;
+    letter-spacing: 1px;
+  }
+
+  .why-desc {
+    font-size: 14px;
+    color: var(--text-muted);
+    line-height: 1.6;
+  }
+
+  /* ---- TICKER ---- */
+  .ticker-wrap {
+    overflow: hidden;
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+    padding: 14px 0;
+    background: var(--bg2);
+    position: relative;
+  }
+
+  .ticker-wrap::before, .ticker-wrap::after {
+    content: '';
+    position: absolute; top: 0; bottom: 0;
+    width: 80px; z-index: 2;
+  }
+  .ticker-wrap::before { left: 0; background: linear-gradient(90deg, var(--bg2), transparent); }
+  .ticker-wrap::after  { right: 0; background: linear-gradient(-90deg, var(--bg2), transparent); }
+
+  .ticker {
+    display: flex;
+    gap: 0;
+    animation: ticker 20s linear infinite;
+    width: max-content;
+  }
+
+  .ticker-item {
+    font-family: 'Orbitron', monospace;
+    font-size: 11px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    padding: 0 32px;
+    white-space: nowrap;
+  }
+
+  .ticker-item span {
+    color: var(--red);
+    text-shadow: 0 0 8px var(--red-glow);
+    margin-right: 32px;
+  }
+
+  /* ---- TESTIMONIALS ---- */
+  .testi-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 20px;
+  }
+
+  .testi-card {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    padding: 28px;
+    position: relative;
+  }
+
+  .testi-card::before {
+    content: '"';
+    position: absolute;
+    top: 16px; left: 20px;
+    font-family: 'Orbitron', monospace;
+    font-size: 60px;
+    color: rgba(255,10,10,0.1);
+    line-height: 1;
+  }
+
+  .testi-text {
+    font-size: 14px;
+    color: var(--text);
+    line-height: 1.7;
+    margin-bottom: 20px;
+    padding-top: 16px;
+    position: relative;
+    z-index: 1;
+  }
+
+  .testi-author {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .testi-avatar {
+    width: 36px; height: 36px;
+    background: var(--red-dark);
+    border: 1px solid var(--border-bright);
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Orbitron', monospace;
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--red);
+  }
+
+  .testi-name {
+    font-family: 'Orbitron', monospace;
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--text);
+    display: block;
+  }
+
+  .testi-sub {
+    font-size: 12px;
+    color: var(--text-muted);
+  }
+
+  .stars {
+    color: var(--red);
+    font-size: 14px;
+    letter-spacing: 2px;
+    margin-bottom: 10px;
+    text-shadow: 0 0 8px rgba(255,10,10,0.4);
+  }
+
+  /* ---- CTA SECTION ---- */
+  .cta-section {
+    max-width: 100%;
+    padding: 100px 40px;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .cta-section::before {
+    content: '';
+    position: absolute; inset: 0;
+    background: radial-gradient(ellipse 60% 80% at 50% 50%, rgba(255,10,10,0.07) 0%, transparent 70%);
+  }
+
+  .cta-section .section-title { margin: 0 auto 16px; }
+  .cta-section .section-desc { margin: 0 auto 44px; text-align: center; }
+
+  /* ---- FOOTER ---- */
+  footer {
+    border-top: 1px solid var(--border);
+    padding: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: var(--bg2);
+  }
+
+  .footer-logo {
+    font-family: 'Orbitron', monospace;
+    font-size: 16px;
+    font-weight: 900;
+    letter-spacing: 4px;
+    color: var(--red);
+    text-shadow: 0 0 16px rgba(255,10,10,0.4);
+  }
+
+  .footer-copy {
+    font-size: 12px;
+    color: var(--text-muted);
+    letter-spacing: 1px;
+  }
+
+  .footer-links {
+    display: flex;
+    gap: 24px;
+    list-style: none;
+  }
+
+  .footer-links a {
+    font-size: 12px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    text-decoration: none;
+    transition: color 0.2s;
+  }
+
+  .footer-links a:hover { color: var(--red); }
+
+  /* ---- ANIMATIONS ---- */
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(30px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  @keyframes pulse {
+    0%, 100% { transform: scale(1); opacity: 0.5; }
+    50%       { transform: scale(1.4); opacity: 1; }
+  }
+
+  @keyframes ticker {
+    from { transform: translateX(0); }
+    to   { transform: translateX(-50%); }
+  }
+
+  @keyframes glitch {
+    0%   { clip-path: inset(40% 0 61% 0); transform: translate(-2px, 0); }
+    20%  { clip-path: inset(92% 0 1% 0);  transform: translate(2px, 0);  }
+    40%  { clip-path: inset(43% 0 1% 0);  transform: translate(-2px, 0); }
+    60%  { clip-path: inset(25% 0 58% 0); transform: translate(2px, 0);  }
+    80%  { clip-path: inset(54% 0 7% 0);  transform: translate(-2px, 0); }
+    100% { clip-path: inset(58% 0 43% 0); transform: translate(0, 0);    }
+  }
+
+  .glitch-wrap { position: relative; display: inline-block; }
+
+  .glitch-wrap::before, .glitch-wrap::after {
+    content: attr(data-text);
+    position: absolute; inset: 0;
+    font-family: 'Orbitron', monospace;
+    font-weight: 900;
+    color: var(--red);
+  }
+
+  .glitch-wrap::before {
+    animation: glitch 4s infinite linear;
+    color: rgba(255,10,10,0.5);
+  }
+
+  .glitch-wrap::after {
+    animation: glitch 4s infinite linear 0.1s;
+    color: rgba(255,100,100,0.3);
+  }
+</style>
+</head>
+<body>
+
+<div class="cursor" id="cursor"></div>
+
+<!-- NAV -->
+<nav>
+  <a href="#" class="nav-logo">WOTA<span>EXE</span></a>
+  <ul class="nav-links">
+    <li><a href="#products">Products</a></li>
+    <li><a href="#why">Features</a></li>
+    <li><a href="#reviews">Reviews</a></li>
+    <li><a href="#contact">Support</a></li>
+  </ul>
+  <a href="#products" class="nav-cta">Buy Now</a>
+</nav>
+
+<!-- HERO -->
+<div class="hero">
+  <div class="hero-bg"></div>
+  <div class="hero-grid"></div>
+
+  <p class="hero-eyebrow">⬡ Elite Gaming Software ⬡</p>
+
+  <h1 class="hero-title">
+    <span class="glitch-wrap" data-text="WOTA">WOTA</span><br>
+    <span class="red glitch-wrap" data-text="EXE">EXE</span>
+  </h1>
+
+  <p class="hero-sub">Panels d'amélioration de l'aim pour Free Fire PC. Précis. Indétectable. Redoutable.</p>
+
+  <div class="hero-btns">
+    <a href="#products" class="btn-primary">Browse Products</a>
+    <a href="#why" class="btn-secondary">Learn More</a>
+  </div>
+
+  <div class="hero-stats">
+    <div class="stat">
+      <span class="stat-num">12K+</span>
+      <span class="stat-label">Active Users</span>
+    </div>
+    <div class="stat">
+      <span class="stat-num">99.8%</span>
+      <span class="stat-label">Uptime</span>
+    </div>
+    <div class="stat">
+      <span class="stat-num">24/7</span>
+      <span class="stat-label">Support</span>
+    </div>
+    <div class="stat">
+      <span class="stat-num">0</span>
+      <span class="stat-label">Detections</span>
+    </div>
+  </div>
+</div>
+
+<!-- TICKER -->
+<div class="ticker-wrap">
+  <div class="ticker">
+    <span class="ticker-item"><span>★</span> PANEL BASIC — FREE FIRE PC — $20/MOIS</span>
+    <span class="ticker-item"><span>★</span> PANEL COMPLEX — AIM AVANCÉ — $35/MOIS</span>
+    <span class="ticker-item"><span>★</span> ACHÈTE SUR DISCORD — LIVRAISON INSTANTANÉE</span>
+    <span class="ticker-item"><span>★</span> MIS À JOUR CHAQUE PATCH FREE FIRE</span>
+    <span class="ticker-item"><span>★</span> PANEL BASIC — FREE FIRE PC — $20/MOIS</span>
+    <span class="ticker-item"><span>★</span> PANEL COMPLEX — AIM AVANCÉ — $35/MOIS</span>
+    <span class="ticker-item"><span>★</span> ACHÈTE SUR DISCORD — LIVRAISON INSTANTANÉE</span>
+    <span class="ticker-item"><span>★</span> MIS À JOUR CHAQUE PATCH FREE FIRE</span>
+  </div>
+</div>
+
+<!-- PRODUCTS -->
+<section id="products">
+  <p class="section-label">Free Fire PC · Aim Panels</p>
+  <h2 class="section-title">Choisis Ton Panel</h2>
+  <p class="section-desc">Deux niveaux de puissance pour dominer Free Fire sur PC. Mis à jour en temps réel à chaque patch du jeu.</p>
+
+  <div class="products-grid" style="grid-template-columns: repeat(auto-fill, minmax(380px, 1fr)); max-width: 900px; margin: 0 auto;">
+
+    <!-- PANEL BASIC -->
+    <div class="product-card">
+      <div class="product-badge sale">Best Value</div>
+      <div class="product-img" style="height:200px; background: linear-gradient(135deg, #0f0505 0%, #1a0000 100%);">
+        <div class="product-img-glow"></div>
+        <span class="product-icon" style="font-size:64px; filter: drop-shadow(0 0 20px rgba(255,10,10,0.8));">🎯</span>
+      </div>
+      <div class="product-body">
+        <span class="product-tag" style="font-size:11px; letter-spacing:4px;">Free Fire PC · Aim Panel</span>
+        <h3 class="product-name" style="font-size:26px;">PANEL BASIC</h3>
+        <p class="product-desc">Panel d'amélioration de l'aim pour Free Fire PC. Parfait pour débuter et dominer tes adversaires avec une précision accrue et un contrôle du recoil optimisé.</p>
+        <ul class="product-features">
+          <li>Amélioration automatique de la visée</li>
+          <li>Réduction du recul des armes</li>
+          <li>Sensibilité optimisée auto</li>
+          <li>Compatible toutes cartes graphiques</li>
+          <li>Interface simple et rapide</li>
+          <li>Mis à jour chaque patch Free Fire</li>
+        </ul>
+        <div class="product-footer">
+          <div class="product-price" style="font-size:32px;">$20<small style="font-size:13px;color:var(--text-muted);font-family:Rajdhani;margin-left:2px">/mois</small></div>
+          <a href="https://discord.gg/zdZAqbsTM" target="_blank" class="btn-buy" style="text-decoration:none; padding: 12px 28px; font-size:11px;">
+            BUY ON Discord
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <!-- PANEL COMPLEX -->
+    <div class="product-card featured" style="box-shadow: 0 0 50px rgba(255,10,10,0.18);">
+      <div class="product-badge">Most Popular</div>
+      <div class="product-img" style="height:200px; background: linear-gradient(135deg, #150000 0%, #2a0000 100%);">
+        <div class="product-img-glow" style="width:160px; height:160px;"></div>
+        <span class="product-icon" style="font-size:64px; filter: drop-shadow(0 0 28px rgba(255,10,10,1));">💀</span>
+      </div>
+      <div class="product-body">
+        <span class="product-tag" style="font-size:11px; letter-spacing:4px;">Free Fire PC · Aim Panel</span>
+        <h3 class="product-name" style="font-size:26px;">PANEL COMPLEX</h3>
+        <p class="product-desc">Le panel ultime pour Free Fire PC. Contrôle total de ton aim avec des paramètres avancés, une précision chirurgicale et toutes les fonctionnalités premium débloquées.</p>
+        <ul class="product-features">
+          <li>Tout le PANEL BASIC inclus</li>
+          <li>Aim assist avancé avec FOV réglable</li>
+          <li>Anti-recoil intelligent par arme</li>
+          <li>Mode Ranked — discret et indétectable</li>
+          <li>Paramètres personnalisables en temps réel</li>
+          <li>Support Discord prioritaire 24/7</li>
+          <li>Accès anticipé aux nouvelles versions</li>
+        </ul>
+        <div class="product-footer">
+          <div class="product-https://discord.gg/zdZAqbsTMprice" style="font-size:32px;">$35<small style="font-size:13px;color:var(--text-muted);font-family:Rajdhani;margin-left:2px">/mois</small></div>
+          <a href="https://discord.gg/zdZAqbsTM" target="_blank" class="btn-buy" style="text-decoration:none; padding: 12px 28px; font-size:11px; box-shadow: 0 0 30px rgba(255,10,10,0.5);">
+            BUY ON Discord
+          </a>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<div class="red-divider"></div>
+
+<!-- WHY -->
+<section id="why">
+  <p class="section-label">Why WOTA EXE</p>
+  <h2 class="section-title">Built Different</h2>
+  <p class="section-desc">We don't cut corners. Every feature is engineered to survive the latest anti-cheat systems.</p>
+
+  <div class="why-grid">
+    <div class="why-card">
+      <span class="why-icon">🧬</span>
+      <p class="why-title">Kernel-Level</p>
+      <p class="why-desc">Ring-0 driver operation means our tools run below any anti-cheat detection layer.</p>
+    </div>
+    <div class="why-card">
+      <span class="why-icon">🔄</span>
+      <p class="why-title">Auto-Updated</p>
+      <p class="why-desc">Our loader checks for updates silently before injection — always running the latest build.</p>
+    </div>
+    <div class="why-card">
+      <span class="why-icon">🔐</span>
+      <p class="why-title">Encrypted Loader</p>
+      <p class="why-desc">Military-grade AES-256 loader encryption. Your license key is bound to your HWID.</p>
+    </div>
+    <div class="why-card">
+      <span class="why-icon">💬</span>
+      <p class="why-title">24/7 Discord</p>
+      <p class="why-desc">Active support team on Discord. Average response time under 5 minutes.</p>
+    </div>
+    <div class="why-card">
+      <span class="why-icon">⚡</span>
+      <p class="why-title">Instant Delivery</p>
+      <p class="why-desc">License key delivered immediately after payment. No manual approval needed.</p>
+    </div>
+    <div class="why-card">
+      <span class="why-icon">♻️</span>
+      <p class="why-title">Refund Policy</p>
+      <p class="why-desc">24-hour money-back guarantee if the product doesn't work as described.</p>
+    </div>
+  </div>
+</section>
+
+<div class="red-divider"></div>
+
+<!-- REVIEWS -->
+<section id="reviews">
+  <p class="section-label">Testimonials</p>
+  <h2 class="section-title">Users Don't Lie</h2>
+  <p class="section-desc">Join thousands of players who already dominate with WOTA EXE.</p>
+
+  <div class="testi-grid">
+    <div class="testi-card">
+      <div class="stars">★★★★★</div>
+      <p class="testi-text">WOTA AIM PRO is on a different level. Smooth, human-like, and completely undetected after 3 months. My KD went from 1.2 to 4.8.</p>
+      <div class="testi-author">
+        <div class="testi-avatar">XR</div>
+        <div>
+          <span class="testi-name">xR4GE</span>
+          <span class="testi-sub">Warzone player · Verified buyer</span>
+        </div>
+      </div>
+    </div>
+    <div class="testi-card">
+      <div class="stars">★★★★★</div>
+      <p class="testi-text">The COMPLETE bundle is insane value. Everything works out of the box, loader is slick, and support responded in 2 minutes when I had a question.</p>
+      <div class="testi-author">
+        <div class="testi-avatar">NV</div>
+        <div>
+          <span class="testi-name">NovaCrypt</span>
+          <span class="testi-sub">FPS enthusiast · Verified buyer</span>
+        </div>
+      </div>
+    </div>
+    <div class="testi-card">
+      <div class="stars">★★★★★</div>
+      <p class="testi-text">WOTA UNLOCK saved me hundreds of hours of grinding. All camos unlocked in 2 minutes. Looks completely legit in-game too.</p>
+      <div class="testi-author">
+        <div class="testi-avatar">SK</div>
+        <div>
+          <span class="testi-name">SkullKing99</span>
+          <span class="testi-sub">Battle royale · Verified buyer</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CTA -->
+<div class="cta-section" id="contact">
+  <p class="section-label" style="justify-content:center">Rejoins-nous</p>
+  <h2 class="section-title">Prêt à Dominer Free Fire ?</h2>
+  <p class="section-desc">Rejoins le Discord WOTA EXE, choisis ton panel et reçois ton accès instantanément.</p>
+  <div style="display:flex;gap:16px;justify-content:center;flex-wrap:wrap">
+    <a href="https://discord.gg/zdZAqbsTM" target="_blank" class="btn-primary">JOIN THE DISCORD</a>
+    <a href="#products" class="btn-secondary">SEE THE PRODUCTS</a>
+  </div>
+</div>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-logo">WOTA EXE</div>
+  <p class="footer-copy">© 2026 WOTA EXE. All rights reserved.</p>
+  <ul class="footer-links">
+    <li><a href="#">Terms</a></li>
+    <li><a href="#">Privacy</a></li>
+    <li><a href="#">Discord</a></li>
+    <li><a href="#">Support</a></li>
+  </ul>
+</footer>
+
+<script>
+  const cursor = document.getElementById('cursor');
+  document.addEventListener('mousemove', e => {
+    cursor.style.left = e.clientX + 'px';
+    cursor.style.top  = e.clientY + 'px';
+  });
+
+  document.querySelectorAll('.btn-buy').forEach(btn => {
+    btn.addEventListener('click', function() {
+      const original = this.textContent;
+      this.textContent = 'Added ✓';
+      this.style.background = '#00cc44';
+      setTimeout(() => {
+        this.textContent = original;
+        this.style.background = '';
+      }, 1500);
+    });
+  });
+
+  const observer = new IntersectionObserver(entries => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        e.target.style.opacity = '1';
+        e.target.style.transform = 'translateY(0)';
+      }
+    });
+  }, { threshold: 0.1 });
+
+  document.querySelectorAll('.product-card, .why-card, .testi-card').forEach(el => {
+    el.style.opacity = '0';
+    el.style.transform = 'translateY(24px)';
+    el.style.transition = 'opacity 0.6s ease, transform 0.6s ease, border-color 0.3s, box-shadow 0.3s';
+    observer.observe(el);
+  });
+</script>
+</body>
+</html>
